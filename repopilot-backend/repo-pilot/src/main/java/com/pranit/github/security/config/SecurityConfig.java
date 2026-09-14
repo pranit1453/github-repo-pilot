@@ -40,10 +40,11 @@ public class SecurityConfig {
             final GithubOAuth2UserService githubOAuth2UserService,
             final OAuth2AuthenticationSuccessHandler successHandler,
             final OAuth2AuthenticationFailureHandler failureHandler,
-            final AuthenticationTokenFilter filter) {
+            final AuthenticationTokenFilter filter,
+            final CorsProperties corsProperties) {
         http
                 .csrf(AbstractHttpConfigurer::disable)
-                .cors(AbstractHttpConfigurer::disable)
+                .cors(cors -> cors.configurationSource(corsConfigurationSource(corsProperties)))
                 .formLogin(AbstractHttpConfigurer::disable)
                 .httpBasic(AbstractHttpConfigurer::disable)
                 .logout(AbstractHttpConfigurer::disable)

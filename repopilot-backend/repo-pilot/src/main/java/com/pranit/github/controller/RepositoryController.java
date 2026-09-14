@@ -3,6 +3,7 @@ package com.pranit.github.controller;
 import com.pranit.github.helper.SecurityContext;
 import com.pranit.github.repo.constant.SyncStatus;
 import com.pranit.github.repo.dto.RepositoryResponse;
+import com.pranit.github.repo.dto.RepositoryStatsResponse;
 import com.pranit.github.repo.service.RepositoryService;
 import com.pranit.github.repo.service.RepositorySyncEventService;
 import com.pranit.github.repo.service.RepositorySyncService;
@@ -54,6 +55,11 @@ public class RepositoryController {
     public ResponseEntity<SseEmitter> subscribeToSync() {
         final UUID userId = SecurityContext.getCurrentUserId();
         return ResponseEntity.status(HttpStatus.OK).body(eventService.subscribe(userId));
+    }
+
+    @GetMapping(value = "/stats", version = "v1")
+    public ResponseEntity<RepositoryStatsResponse> fetchStats() {
+        return ResponseEntity.status(HttpStatus.OK).body(repositoryService.fetchRepositoryStats());
     }
 
     @GetMapping(version = "v1")

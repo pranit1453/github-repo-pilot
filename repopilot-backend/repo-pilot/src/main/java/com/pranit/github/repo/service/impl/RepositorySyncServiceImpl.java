@@ -59,7 +59,31 @@ public class RepositorySyncServiceImpl implements RepositorySyncService {
                 .map(value -> ((Number) value).longValue())
                 .orElseThrow(() -> new OAuth2AuthenticationException("GitHub repo id not found"));
         repositoryRepository.findByUserIdAndGithubRepoId(userId, githubRepoId)
+                .map(existing -> updateRepository(existing, remote))
                 .orElseGet(() -> createRepository(remote, userId, githubRepoId));
+    }
+
+    private Repository updateRepository(final Repository existing, final Map<String, Object> remote) {
+        final String fullName = String.valueOf(remote.get("full_name"));
+        final String[] parts = fullName.split("/", 2);
+        String owner = parts.length > 0 ? parts[0] : null;
+        if (owner == null || owner.isBlank()) {
+            final Object ownerObj = remote.get("owner");
+            if (ownerObj instanceof Map<?, ?> ownerMap && ownerMap.get("login") != null) {
+                owner = String.valueOf(ownerMap.get("login"));
+            }
+        }
+        existing.setOwner(owner);
+        existing.setName(parts.length > 1 ? parts[1] : String.valueOf(remote.get("name")));
+        existing.setFullName(fullName);
+        existing.setPrivate(Boolean.TRUE.equals(remote.get("private")));
+        existing.setDefaultBranch(remote.get("default_branch") != null
+                ? String.valueOf(remote.get("default_branch"))
+                : "main");
+        existing.setLanguage(remote.get("language") != null ? String.valueOf(remote.get("language")) : null);
+        existing.setHtmlUrl(remote.get("html_url") != null ? String.valueOf(remote.get("html_url")) : null);
+        existing.setDescription(remote.get("description") != null ? String.valueOf(remote.get("description")) : null);
+        return repositoryRepository.save(existing);
     }
 
     private Repository createRepository(final Map<String, Object> remote, final UUID userId, final Long githubRepoId) {
@@ -85,7 +109,6 @@ public class RepositorySyncServiceImpl implements RepositorySyncService {
                 .language(remote.get("language") != null ? String.valueOf(remote.get("language")) : null)
                 .htmlUrl(remote.get("html_url") != null ? String.valueOf(remote.get("html_url")) : null)
                 .description(remote.get("description") != null ? String.valueOf(remote.get("description")) : null)
-                .indexedAt(Instant.now())
                 .build();
         return repositoryRepository.save(repository);
     }

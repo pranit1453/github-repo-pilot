@@ -4,5 +4,5 @@ public enum IndexStatus {
     PENDING,
     INDEXING,
     INDEXED,
-    FAILED
+    IN_PROGRESS, COMPLETED, FAILED
 }
