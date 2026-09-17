@@ -3,6 +3,7 @@ package com.pranit.github.entities.constant;
 public enum IndexStatus {
     PENDING,
     INDEXING,
+    READY,
     INDEXED,
-    IN_PROGRESS, COMPLETED, FAILED
+    FAILED
 }

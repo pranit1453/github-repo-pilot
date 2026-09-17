@@ -1,4 +1,4 @@
-package com.pranit.github.pipeline.ingestion;
+package com.pranit.github.rag.pipeline.ingestion.filter;
 
 import org.springframework.stereotype.Component;
 
