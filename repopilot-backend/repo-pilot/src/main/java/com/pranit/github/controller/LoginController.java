@@ -31,7 +31,7 @@ import java.net.URI;
 @Validated
 @Tag(
         name = "Authentication",
-        description = "Authentication and current-user APIs"
+        description = "Endpoints for GitHub OAuth2 login, token management, session validation, and user logout."
 )
 public class LoginController {
 
@@ -39,7 +39,10 @@ public class LoginController {
     private final TokenService tokenService;
     private final LogoutService logoutService;
 
-    @Operation(summary = "Redirect to GitHub OAuth2 login")
+    @Operation(
+            summary = "Start GitHub OAuth2 login",
+            description = "Generates the GitHub OAuth2 authorization URL and redirects the client to GitHub to begin the authentication flow."
+    )
     @GetMapping(value = "/login", version = "v1")
     public ResponseEntity<Void> loginUrl() {
         final GithubOauth2Response response = loginService.githubOauth2Url();
@@ -50,7 +53,10 @@ public class LoginController {
                 .build();
     }
 
-    @Operation(summary = "Get current authenticated user")
+    @Operation(
+            summary = "Get current authenticated user",
+            description = "Returns the profile information of the user associated with the current authenticated session or access token."
+    )
     @GetMapping(value = "/me", version = "v1")
     public ResponseEntity<UserResponse> me() {
         return ResponseEntity.status(HttpStatus.OK).body(loginService.getCurrentUser());
@@ -58,7 +64,7 @@ public class LoginController {
 
     @Operation(
             summary = "Refresh access token",
-            description = "Validates the refresh token and generates a new access and refresh token."
+            description = "Validates the refresh token from the request and issues a new access token and refresh token for continued authentication."
     )
     @PostMapping(value = "/refresh", version = "v1")
     public ResponseEntity<TokenResponse> refreshToken(final HttpServletRequest request, final HttpServletResponse response) {
@@ -73,8 +79,8 @@ public class LoginController {
     }
 
     @Operation(
-            summary = "Logout user",
-            description = "Revokes the user's access and refresh tokens and clears the authentication cookies."
+            summary = "Logout authenticated user",
+            description = "Revokes the user's access and refresh tokens and clears authentication cookies to terminate the current authenticated session."
     )
     @PostMapping(value = "/logout", version = "v1")
     public ResponseEntity<String> logout(@Valid HttpServletRequest request, @Valid HttpServletResponse response) {
