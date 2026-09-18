@@ -1,7 +1,7 @@
-package com.pranit.github.rag.pipeline.ingestion.service.impl;
+package com.pranit.github.rag.ingestion.service.impl;
 
 import com.pranit.github.entities.constant.IndexStatus;
-import com.pranit.github.rag.pipeline.ingestion.service.RepositoryIndexingSyncEventService;
+import com.pranit.github.rag.ingestion.service.RepositoryIndexingSyncEventService;
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 

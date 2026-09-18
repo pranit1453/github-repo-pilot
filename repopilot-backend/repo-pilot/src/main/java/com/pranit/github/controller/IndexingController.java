@@ -1,9 +1,9 @@
 package com.pranit.github.controller;
 
 import com.pranit.github.helper.SecurityContext;
-import com.pranit.github.rag.pipeline.ingestion.dto.IndexingResponse;
-import com.pranit.github.rag.pipeline.ingestion.service.RepositoryIndexingService;
-import com.pranit.github.rag.pipeline.ingestion.service.RepositoryIndexingSyncEventService;
+import com.pranit.github.rag.ingestion.dto.IndexingResponse;
+import com.pranit.github.rag.ingestion.service.RepositoryIndexingService;
+import com.pranit.github.rag.ingestion.service.RepositoryIndexingSyncEventService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.constraints.NotNull;

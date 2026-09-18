@@ -1,10 +1,10 @@
-package com.pranit.github.rag.pipeline.ingestion.service.impl;
+package com.pranit.github.rag.ingestion.service.impl;
 
 import com.pranit.github.entities.constant.IndexStatus;
 import com.pranit.github.entities.entity.Repository;
-import com.pranit.github.rag.pipeline.ingestion.dto.IndexingResponse;
-import com.pranit.github.rag.pipeline.ingestion.dto.RepositoryIndexingStartedEvent;
-import com.pranit.github.rag.pipeline.ingestion.service.RepositoryIndexingService;
+import com.pranit.github.rag.ingestion.dto.IndexingResponse;
+import com.pranit.github.rag.ingestion.dto.RepositoryIndexingStartedEvent;
+import com.pranit.github.rag.ingestion.service.RepositoryIndexingService;
 import com.pranit.github.repo.exception.RepositoryAlreadyExistsException;
 import com.pranit.github.repo.exception.RepositoryNotFoundException;
 import com.pranit.github.repo.repository.RepositoryRepository;

@@ -1,4 +1,4 @@
-package com.pranit.github.rag.pipeline.orchestrator;
+package com.pranit.github.rag.orchestrator;
 
 import com.pranit.github.authentication.exception.UserNotExistsException;
 import com.pranit.github.authentication.repository.UserRepository;
@@ -7,9 +7,9 @@ import com.pranit.github.client.impl.GitHubRateLimiter;
 import com.pranit.github.entities.constant.IndexStatus;
 import com.pranit.github.entities.entity.Repository;
 import com.pranit.github.entities.entity.User;
-import com.pranit.github.rag.pipeline.ingestion.chunker.CodeChunker;
-import com.pranit.github.rag.pipeline.ingestion.filter.CodeFileFilter;
-import com.pranit.github.rag.pipeline.ingestion.service.RepositoryIndexingSyncEventService;
+import com.pranit.github.rag.ingestion.chunker.CodeChunker;
+import com.pranit.github.rag.ingestion.filter.CodeFileFilter;
+import com.pranit.github.rag.ingestion.service.RepositoryIndexingSyncEventService;
 import com.pranit.github.repo.repository.RepositoryRepository;
 import com.pranit.github.repo.service.RepositoryIndexProgressService;
 import lombok.extern.slf4j.Slf4j;

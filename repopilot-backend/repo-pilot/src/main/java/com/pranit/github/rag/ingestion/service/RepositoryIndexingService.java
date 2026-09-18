@@ -1,6 +1,6 @@
-package com.pranit.github.rag.pipeline.ingestion.service;
+package com.pranit.github.rag.ingestion.service;
 
-import com.pranit.github.rag.pipeline.ingestion.dto.IndexingResponse;
+import com.pranit.github.rag.ingestion.dto.IndexingResponse;
 
 import java.util.UUID;
 

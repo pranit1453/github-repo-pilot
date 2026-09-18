@@ -1,8 +1,8 @@
-package com.pranit.github.rag.pipeline.ingestion.chunker;
+package com.pranit.github.rag.ingestion.chunker;
 
 import com.pranit.github.constant.RepoMetadata;
 import com.pranit.github.properties.RagProperties;
-import com.pranit.github.rag.pipeline.ingestion.filter.CodeFileFilter;
+import com.pranit.github.rag.ingestion.filter.CodeFileFilter;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.transformer.splitter.TokenTextSplitter;
 import org.springframework.stereotype.Component;

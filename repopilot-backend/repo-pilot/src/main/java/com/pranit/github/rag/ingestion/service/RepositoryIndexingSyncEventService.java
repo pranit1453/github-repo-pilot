@@ -1,4 +1,4 @@
-package com.pranit.github.rag.pipeline.ingestion.service;
+package com.pranit.github.rag.ingestion.service;
 
 import com.pranit.github.entities.constant.IndexStatus;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;

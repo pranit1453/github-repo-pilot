@@ -1,9 +1,9 @@
-package com.pranit.github.rag.pipeline.orchestrator;
+package com.pranit.github.rag.orchestrator;
 
 import com.pranit.github.entities.constant.IndexStatus;
 import com.pranit.github.entities.entity.Repository;
-import com.pranit.github.rag.pipeline.ingestion.dto.RepositoryIndexingStartedEvent;
-import com.pranit.github.rag.pipeline.ingestion.service.RepositoryIndexingSyncEventService;
+import com.pranit.github.rag.ingestion.dto.RepositoryIndexingStartedEvent;
+import com.pranit.github.rag.ingestion.service.RepositoryIndexingSyncEventService;
 import com.pranit.github.repo.exception.RepositoryNotFoundException;
 import com.pranit.github.repo.repository.RepositoryRepository;
 import lombok.extern.slf4j.Slf4j;

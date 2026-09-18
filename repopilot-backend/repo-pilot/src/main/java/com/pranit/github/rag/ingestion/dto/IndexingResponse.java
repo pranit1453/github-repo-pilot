@@ -1,4 +1,4 @@
-package com.pranit.github.rag.pipeline.ingestion.dto;
+package com.pranit.github.rag.ingestion.dto;
 
 import com.pranit.github.entities.constant.IndexStatus;
 import com.pranit.github.entities.entity.Repository;
