@@ -38,9 +38,9 @@ public class IndexingController {
             description = "Starts the indexing process for the specified repository and returns the initial indexing status."
     )
     @PostMapping(value = "/{repositoryId}/index", version = "v1")
-    public ResponseEntity<IndexingResponse> startIndexing(@NotNull @PathVariable UUID repoId) {
+    public ResponseEntity<IndexingResponse> startIndexing(@NotNull @PathVariable("repositoryId") UUID repositoryId) {
         UUID userId = SecurityContext.getCurrentUserId();
-        return ResponseEntity.accepted().body(repositoryIndexingService.startIndexing(repoId, userId));
+        return ResponseEntity.accepted().body(repositoryIndexingService.startIndexing(repositoryId, userId));
     }
 
     @Operation(
@@ -48,7 +48,7 @@ public class IndexingController {
             description = "Opens a Server-Sent Events stream to receive real-time indexing status and progress updates for the specified repository."
     )
     @GetMapping(value = "/{repositoryId}/indexing/events", version = "v1", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    public ResponseEntity<SseEmitter> events(@NotNull @PathVariable UUID repoId) {
-        return ResponseEntity.accepted().body(repositoryIndexingSyncEventService.subscribe(repoId));
+    public ResponseEntity<SseEmitter> events(@NotNull @PathVariable("repositoryId") UUID repositoryId) {
+        return ResponseEntity.ok(repositoryIndexingSyncEventService.subscribe(repositoryId));
     }
 }

@@ -17,10 +17,18 @@ import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 
 import java.time.Instant;
+import jakarta.persistence.Index;
 import java.util.UUID;
 
 @Entity
-@Table(name = "chat_sessions")
+@Table(
+        name = "chat_sessions",
+        schema = "chat",
+        indexes = {
+                @Index(name = "idx_chat_sessions_user_repo", columnList = "user_id, repository_id"),
+                @Index(name = "idx_chat_sessions_created_at", columnList = "created_at")
+        }
+)
 @Getter
 @Setter
 @NoArgsConstructor

@@ -8,6 +8,8 @@ import com.pranit.github.repo.exception.RepositoryNotFoundException;
 import com.pranit.github.repo.repository.RepositoryRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
 
@@ -26,12 +28,13 @@ public abstract class IngestionOrchestrator {
         this.syncEventService = syncEventService;
     }
 
-    @Async("indexing")
+    @Async("indexingExecutor")
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handle(final RepositoryIndexingStartedEvent event) {
         execute(event.repositoryId(), event.userId());
     }
 
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void execute(final UUID repositoryId, final UUID userId) {
         final Repository repository = repositoryRepository.findByRepositoryIdAndUserId(repositoryId, userId)
                 .orElseThrow(() -> new RepositoryNotFoundException("Repository not found"));

@@ -2,14 +2,15 @@ package com.pranit.github.repo.service.impl;
 
 import com.pranit.github.repo.constant.SyncStatus;
 import com.pranit.github.repo.service.RepositorySyncEventService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
-import java.io.IOException;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
+@Slf4j
 @Service
 public final class RepositorySyncEventServiceImpl implements RepositorySyncEventService {
 
@@ -26,9 +27,8 @@ public final class RepositorySyncEventServiceImpl implements RepositorySyncEvent
             emitter.send(SseEmitter.event()
                     .name("connected")
                     .data(Map.of("status", "CONNECTED")));
-        } catch (IOException e) {
+        } catch (Exception e) {
             removeEmitter(userId, emitter);
-            emitter.completeWithError(e);
         }
         return emitter;
     }
@@ -42,12 +42,15 @@ public final class RepositorySyncEventServiceImpl implements RepositorySyncEvent
                     .name("repository-sync")
                     .data(Map.of("status", status.name())));
             if (status == SyncStatus.COMPLETED || status == SyncStatus.FAILED) {
-                emitter.complete();
+                try {
+                    emitter.complete();
+                } catch (Exception ignored) {
+                }
                 emitters.remove(userId, emitter);
             }
-        } catch (IOException e) {
+        } catch (Exception e) {
+            log.debug("SSE client disconnected or send failed for user {}: {}", userId, e.getMessage());
             emitters.remove(userId, emitter);
-            emitter.completeWithError(e);
         }
     }
 

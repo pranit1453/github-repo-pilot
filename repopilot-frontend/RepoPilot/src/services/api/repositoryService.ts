@@ -11,7 +11,7 @@ export interface Repository {
   language: string | null;
   htmlUrl: string | null;
   description: string | null;
-  indexStatus: 'PENDING' | 'IN_PROGRESS' | 'COMPLETED' | 'FAILED';
+  indexStatus: 'PENDING' | 'INDEXING' | 'IN_PROGRESS' | 'CHUNKING' | 'INDEXED' | 'COMPLETED' | 'FAILED' | string;
   indexedAt: string | null;
   chunkCount: number;
   filesTotal: number;

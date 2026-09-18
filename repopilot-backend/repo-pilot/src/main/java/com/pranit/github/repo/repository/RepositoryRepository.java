@@ -8,6 +8,8 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import org.springframework.transaction.annotation.Transactional;
+
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
@@ -17,6 +19,7 @@ public interface RepositoryRepository extends JpaRepository<Repository, UUID>, J
 
     List<Repository> findByUserId(UUID userId);
 
+    @Transactional
     @Modifying
     @Query("""
                 update Repository r
@@ -36,6 +39,7 @@ public interface RepositoryRepository extends JpaRepository<Repository, UUID>, J
             @Param("updatedAt") Instant updatedAt
     );
 
+    @Transactional
     @Modifying
     @Query("""
                 update Repository r

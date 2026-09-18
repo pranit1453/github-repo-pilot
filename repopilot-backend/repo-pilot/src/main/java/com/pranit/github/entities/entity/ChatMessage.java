@@ -17,11 +17,19 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import jakarta.persistence.Index;
 import java.time.Instant;
 import java.util.UUID;
 
 @Entity
-@Table(name = "chat_messages")
+@Table(
+        name = "chat_messages",
+        schema = "chat",
+        indexes = {
+                @Index(name = "idx_chat_messages_session_id", columnList = "session_id"),
+                @Index(name = "idx_chat_messages_created_at", columnList = "created_at")
+        }
+)
 @Getter
 @Setter
 @NoArgsConstructor

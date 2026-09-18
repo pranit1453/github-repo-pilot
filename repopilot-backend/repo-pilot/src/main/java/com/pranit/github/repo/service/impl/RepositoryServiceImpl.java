@@ -84,8 +84,8 @@ public class RepositoryServiceImpl implements RepositoryService {
             if (repo.getIndexStatus() != null) {
                 switch (repo.getIndexStatus()) {
                     case PENDING -> pending++;
-                    case INDEXING -> indexing++;
-                    case READY -> ready++;
+                    case INDEXING, CHUNKING -> indexing++;
+                    case INDEXED -> ready++;
                     case FAILED -> failed++;
                 }
             } else {

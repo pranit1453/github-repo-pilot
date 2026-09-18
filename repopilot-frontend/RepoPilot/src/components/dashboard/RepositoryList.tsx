@@ -19,7 +19,8 @@ import {
   ChevronLeft,
   ChevronRight,
   ChevronsLeft,
-  ChevronsRight
+  ChevronsRight,
+  Bot
 } from 'lucide-react';
 
 interface RepositoryListProps {
@@ -33,8 +34,9 @@ interface RepositoryListProps {
   onSearchChange: (keyword: string) => void;
   onPageChange: (page: number) => void;
   onPageSizeChange?: (size: number) => void;
-  onIndexRepo?: (repoId: string) => void;
+  onIndexRepo?: (repoId: string, repoName: string) => void;
   onInspectDetails?: (repo: Repository) => void;
+  onOpenChat?: (repo: Repository) => void;
 }
 
 export const RepositoryList: React.FC<RepositoryListProps> = ({
@@ -50,6 +52,7 @@ export const RepositoryList: React.FC<RepositoryListProps> = ({
   onPageSizeChange,
   onIndexRepo,
   onInspectDetails,
+  onOpenChat,
 }) => {
   // Local state for UI controls matching exact screenshot filters
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
@@ -233,28 +236,36 @@ export const RepositoryList: React.FC<RepositoryListProps> = ({
 
                 {/* Index Status Badge & Language Pill */}
                 <div className="flex items-center gap-2 flex-wrap">
-                  <span
-                    className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-wider uppercase border ${
-                      repo.indexStatus === 'COMPLETED'
-                        ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/30'
-                        : repo.indexStatus === 'IN_PROGRESS'
-                        ? 'bg-amber-500/10 text-amber-500 border-amber-500/30 animate-pulse'
-                        : repo.indexStatus === 'FAILED'
-                        ? 'bg-rose-500/10 text-rose-500 border-rose-500/30'
-                        : 'bg-amber-500/10 text-amber-500 border-amber-500/30'
-                    }`}
-                  >
-                    {repo.indexStatus === 'COMPLETED' ? (
-                      <CheckCircle2 className="size-3" />
-                    ) : repo.indexStatus === 'FAILED' ? (
-                      <XCircle className="size-3" />
-                    ) : repo.indexStatus === 'IN_PROGRESS' ? (
-                      <Loader2 className="size-3 animate-spin" />
-                    ) : (
-                      <Clock className="size-3" />
-                    )}
-                    {repo.indexStatus}
-                  </span>
+                  {(() => {
+                    const isIndexed = repo.indexStatus === 'INDEXED' || repo.indexStatus === 'COMPLETED';
+                    const isIndexing = repo.indexStatus === 'INDEXING' || repo.indexStatus === 'IN_PROGRESS' || repo.indexStatus === 'CHUNKING';
+                    const isFailed = repo.indexStatus === 'FAILED';
+
+                    return (
+                      <span
+                        className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-wider uppercase border ${
+                          isIndexed
+                            ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/30'
+                            : isIndexing
+                            ? 'bg-amber-500/10 text-amber-500 border-amber-500/30 animate-pulse'
+                            : isFailed
+                            ? 'bg-rose-500/10 text-rose-500 border-rose-500/30'
+                            : 'bg-slate-500/10 text-slate-400 border-slate-500/30'
+                        }`}
+                      >
+                        {isIndexed ? (
+                          <CheckCircle2 className="size-3 text-emerald-500" />
+                        ) : isFailed ? (
+                          <XCircle className="size-3 text-rose-500" />
+                        ) : isIndexing ? (
+                          <Loader2 className="size-3 animate-spin text-amber-500" />
+                        ) : (
+                          <Clock className="size-3 text-slate-400" />
+                        )}
+                        {isIndexed ? 'INDEXED' : isIndexing ? 'INDEXING' : isFailed ? 'FAILED' : 'PENDING'}
+                      </span>
+                    );
+                  })()}
 
                   {repo.language && (
                     <span className="px-2.5 py-0.5 rounded-full bg-secondary text-secondary-foreground font-semibold text-[10px] border border-border/50">
@@ -283,12 +294,12 @@ export const RepositoryList: React.FC<RepositoryListProps> = ({
                 </div>
 
                 {/* Card Footer Actions Row */}
-                <div className="flex items-center justify-between gap-3 pt-1">
+                <div className="flex items-center justify-between gap-2 pt-1 flex-wrap">
                   <button
                     onClick={() => onInspectDetails && onInspectDetails(repo)}
                     className="text-xs text-muted-foreground hover:text-foreground font-medium transition-colors cursor-pointer flex items-center gap-1"
                   >
-                    Inspect Details
+                    Inspect
                     {repo.htmlUrl && (
                       <a
                         href={repo.htmlUrl}
@@ -303,12 +314,32 @@ export const RepositoryList: React.FC<RepositoryListProps> = ({
                     )}
                   </button>
 
-                  <button
-                    onClick={() => onIndexRepo && onIndexRepo(repo.id)}
-                    className="bg-white hover:bg-neutral-200 text-black font-bold text-xs px-4 py-2 rounded-xl flex items-center gap-1.5 transition-all cursor-pointer shadow-xs active:scale-95 shrink-0"
-                  >
-                    <Cpu className="size-3.5" /> Index Now
-                  </button>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    {repo.indexStatus === 'INDEXED' || repo.indexStatus === 'COMPLETED' ? (
+                      <button
+                        onClick={() => onOpenChat && onOpenChat(repo)}
+                        className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-xs px-3.5 py-1.5 rounded-xl flex items-center gap-1.5 transition-all cursor-pointer shadow-xs active:scale-95"
+                      >
+                        <Bot className="size-3.5" /> AI Chat
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => onIndexRepo && onIndexRepo(repo.id, repo.name)}
+                        disabled={repo.indexStatus === 'INDEXING' || repo.indexStatus === 'IN_PROGRESS' || repo.indexStatus === 'CHUNKING'}
+                        className="bg-secondary hover:bg-secondary/80 text-secondary-foreground font-bold text-xs px-3.5 py-1.5 rounded-xl flex items-center gap-1.5 transition-all cursor-pointer shadow-xs active:scale-95 disabled:opacity-60"
+                      >
+                        {repo.indexStatus === 'INDEXING' || repo.indexStatus === 'IN_PROGRESS' || repo.indexStatus === 'CHUNKING' ? (
+                          <>
+                            <Loader2 className="size-3.5 animate-spin text-primary" /> Indexing...
+                          </>
+                        ) : (
+                          <>
+                            <Cpu className="size-3.5" /> Index Now
+                          </>
+                        )}
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
@@ -317,57 +348,94 @@ export const RepositoryList: React.FC<RepositoryListProps> = ({
       ) : (
         /* List View - Sleek Horizontal Row Layout */
         <div className="space-y-3">
-          {filteredRepositories.map((repo) => (
-            <div
-              key={repo.id}
-              className="p-4 rounded-xl border border-border/80 bg-card/80 backdrop-blur-md hover:border-border transition-all flex flex-col md:flex-row items-start md:items-center justify-between gap-4"
-            >
-              <div className="space-y-1.5 flex-1 min-w-0">
-                <div className="flex items-center gap-2.5 flex-wrap">
-                  <h3 className="text-sm font-bold text-foreground tracking-tight">{repo.name}</h3>
-                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium border border-border/60 bg-muted/40 text-muted-foreground">
-                    {repo.isPrivate ? <Lock className="size-2.5" /> : <Globe className="size-2.5" />}
-                    {repo.isPrivate ? 'Private' : 'Public'}
-                  </span>
+          {filteredRepositories.map((repo) => {
+            const isIndexed = repo.indexStatus === 'INDEXED' || repo.indexStatus === 'COMPLETED';
+            const isIndexing = repo.indexStatus === 'INDEXING' || repo.indexStatus === 'IN_PROGRESS' || repo.indexStatus === 'CHUNKING';
+            const isFailed = repo.indexStatus === 'FAILED';
 
-                  <span
-                    className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border ${
-                      repo.indexStatus === 'COMPLETED'
-                        ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/30'
-                        : repo.indexStatus === 'FAILED'
-                        ? 'bg-rose-500/10 text-rose-500 border-rose-500/30'
-                        : 'bg-amber-500/10 text-amber-500 border-amber-500/30'
-                    }`}
-                  >
-                    <Clock className="size-2.5" /> {repo.indexStatus}
-                  </span>
-
-                  {repo.language && (
-                    <span className="px-2 py-0.5 rounded-full bg-secondary text-secondary-foreground text-[10px] font-semibold border border-border/50">
-                      {repo.language}
+            return (
+              <div
+                key={repo.id}
+                className="p-4 rounded-xl border border-border/80 bg-card/80 backdrop-blur-md hover:border-border transition-all flex flex-col md:flex-row items-start md:items-center justify-between gap-4"
+              >
+                <div className="space-y-1.5 flex-1 min-w-0">
+                  <div className="flex items-center gap-2.5 flex-wrap">
+                    <h3 className="text-sm font-bold text-foreground tracking-tight">{repo.name}</h3>
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium border border-border/60 bg-muted/40 text-muted-foreground">
+                      {repo.isPrivate ? <Lock className="size-2.5" /> : <Globe className="size-2.5" />}
+                      {repo.isPrivate ? 'Private' : 'Public'}
                     </span>
-                  )}
+
+                    <span
+                      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border ${
+                        isIndexed
+                          ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/30'
+                          : isIndexing
+                          ? 'bg-amber-500/10 text-amber-500 border-amber-500/30 animate-pulse'
+                          : isFailed
+                          ? 'bg-rose-500/10 text-rose-500 border-rose-500/30'
+                          : 'bg-slate-500/10 text-slate-400 border-slate-500/30'
+                      }`}
+                    >
+                      {isIndexed ? (
+                        <CheckCircle2 className="size-2.5 text-emerald-500" />
+                      ) : isFailed ? (
+                        <XCircle className="size-2.5 text-rose-500" />
+                      ) : isIndexing ? (
+                        <Loader2 className="size-2.5 animate-spin text-amber-500" />
+                      ) : (
+                        <Clock className="size-2.5 text-slate-400" />
+                      )}
+                      {isIndexed ? 'INDEXED' : isIndexing ? 'INDEXING' : isFailed ? 'FAILED' : 'PENDING'}
+                    </span>
+
+                    {repo.language && (
+                      <span className="px-2 py-0.5 rounded-full bg-secondary text-secondary-foreground text-[10px] font-semibold border border-border/50">
+                        {repo.language}
+                      </span>
+                    )}
+                  </div>
+
+                  <p className="text-xs text-muted-foreground line-clamp-1">{repo.description || 'No description provided for this repository.'}</p>
                 </div>
 
-                <p className="text-xs text-muted-foreground line-clamp-1">{repo.description || 'No description provided for this repository.'}</p>
-              </div>
+                {/* Right Stats & Actions */}
+                <div className="flex items-center gap-4 shrink-0 self-end md:self-auto">
+                  <div className="text-xs font-medium text-muted-foreground flex items-center gap-4">
+                    <span>Files: <strong className="text-foreground">{repo.filesProcessed}/{repo.filesTotal}</strong></span>
+                    <span>Chunks: <strong className="text-foreground">{repo.chunkCount}</strong></span>
+                  </div>
 
-              {/* Right Stats & Actions */}
-              <div className="flex items-center gap-5 shrink-0 self-end md:self-auto">
-                <div className="text-xs font-medium text-muted-foreground flex items-center gap-4">
-                  <span>Files: <strong className="text-foreground">{repo.filesProcessed}/{repo.filesTotal}</strong></span>
-                  <span>Chunks: <strong className="text-foreground">{repo.chunkCount}</strong></span>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    {isIndexed ? (
+                      <button
+                        onClick={() => onOpenChat && onOpenChat(repo)}
+                        className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-xs px-3.5 py-1.5 rounded-lg flex items-center gap-1.5 transition-all cursor-pointer shadow-xs active:scale-95"
+                      >
+                        <Bot className="size-3.5" /> AI Chat
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => onIndexRepo && onIndexRepo(repo.id, repo.name)}
+                        disabled={isIndexing}
+                        className="bg-secondary hover:bg-secondary/80 text-secondary-foreground font-bold text-xs px-3.5 py-1.5 rounded-lg flex items-center gap-1.5 transition-all cursor-pointer shadow-xs active:scale-95 disabled:opacity-60"
+                      >
+                        {isIndexing ? (
+                          <>
+                            <Loader2 className="size-3.5 animate-spin text-primary" /> Indexing...
+                          </>
+                        ) : (
+                          <>
+                            <Cpu className="size-3.5" /> Index Now
+                          </>
+                        )}
+                      </button>
+                    )}
+                  </div>
                 </div>
-
-                <button
-                  onClick={() => onIndexRepo && onIndexRepo(repo.id)}
-                  className="bg-white hover:bg-neutral-200 text-black font-bold text-xs px-3.5 py-1.5 rounded-lg flex items-center gap-1.5 transition-all cursor-pointer shadow-xs shrink-0"
-                >
-                  <Cpu className="size-3.5" /> Index Now
-                </button>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
