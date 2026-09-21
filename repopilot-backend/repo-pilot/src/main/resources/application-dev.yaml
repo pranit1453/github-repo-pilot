@@ -99,6 +99,14 @@ rag:
       model: ${REWRITE_MODEL}
       temperature: 0.1
       max-tokens: 512
+
+# Graphify Configuration
+graphify:
+  executable: graphify
+  workspace: /tmp/github-rag/graphify
+  timeout-seconds: 300
+  mcp-url: http://localhost:8080/mcp
+  api-key: ${GRAPHIFY_API_KEY}
 # JWT Token Configuration
 security:
   accessToken:

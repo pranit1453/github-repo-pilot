@@ -7,6 +7,9 @@ import com.pranit.github.client.impl.GitHubRateLimiter;
 import com.pranit.github.entities.constant.IndexStatus;
 import com.pranit.github.entities.entity.Repository;
 import com.pranit.github.entities.entity.User;
+import com.pranit.github.rag.graph.GraphIndexingService;
+import com.pranit.github.rag.graph.GraphifyWorkspaceService;
+import com.pranit.github.rag.graph.RepositorySourceWriter;
 import com.pranit.github.rag.ingestion.chunker.CodeChunker;
 import com.pranit.github.rag.ingestion.filter.CodeFileFilter;
 import com.pranit.github.rag.ingestion.service.RepositoryIndexingSyncEventService;
@@ -39,6 +42,9 @@ public class GithubRepositoryIngestionOrchestrator extends IngestionOrchestrator
     private final GitHubRateLimiter gitHubRateLimiter;
     private final CodeChunker codeChunker;
     private final VectorStore vectorStore;
+    private final GraphIndexingService graphIndexingService;
+    private final GraphifyWorkspaceService graphifyWorkspaceService;
+    private final RepositorySourceWriter repositorySourceWriter;
 
     @Value("${app.indexing.max-file-bytes:102400}")
     private long maxFileBytes;
@@ -56,7 +62,10 @@ public class GithubRepositoryIngestionOrchestrator extends IngestionOrchestrator
             CodeFileFilter codeFileFilter,
             GitHubRateLimiter gitHubRateLimiter,
             CodeChunker codeChunker,
-            VectorStore vectorStore) {
+            VectorStore vectorStore,
+            GraphIndexingService graphIndexingService,
+            GraphifyWorkspaceService graphifyWorkspaceService,
+            RepositorySourceWriter repositorySourceWriter) {
 
         super(repositoryRepository, syncEventService);
         this.gitHubApiClient = gitHubApiClient;
@@ -67,15 +76,26 @@ public class GithubRepositoryIngestionOrchestrator extends IngestionOrchestrator
         this.gitHubRateLimiter = gitHubRateLimiter;
         this.codeChunker = codeChunker;
         this.vectorStore = vectorStore;
-        this.progressService = progressService;
+        this.graphIndexingService = graphIndexingService;
+        this.graphifyWorkspaceService = graphifyWorkspaceService;
+        this.repositorySourceWriter = repositorySourceWriter;
     }
 
     @Override
     public void ingestRepository(final Repository repository, final UUID userId) {
         syncEventService.notify(repository.getRepositoryId(), IndexStatus.INDEXING);
         final String token = getToken(userId);
-        final Map<String, Object> tree = gitHubApiClient.getRepoTree
-                (token, repository.getOwner(), repository.getName(), repository.getDefaultBranch());
+        final Path sourceDirectory;
+
+        try {
+            sourceDirectory = graphifyWorkspaceService.create(repository.getRepositoryId());
+        } catch (IOException e) {
+            throw new IllegalStateException(
+                    "Unable to create Graphify workspace", e);
+        }
+
+        final Map<String, Object> tree = gitHubApiClient.getRepoTree(
+                token, repository.getOwner(), repository.getName(), repository.getDefaultBranch());
         gitHubRateLimiter.pause();
         if (tree == null || tree.get("tree") == null) {
             log.info("No files found for repository {}", repository.getFullName());
@@ -94,43 +114,104 @@ public class GithubRepositoryIngestionOrchestrator extends IngestionOrchestrator
         final List<Document> batch = new ArrayList<>(vectorBatchSize);
         int processedFiles = 0;
         int indexedChunks = 0;
+
         for (String path : filePaths) {
             try {
-                String content = gitHubApiClient.getFileContent
-                        (token, repository.getOwner(), repository.getName(), path);
+                String content = gitHubApiClient.getFileContent(
+                        token, repository.getOwner(), repository.getName(), path);
                 gitHubRateLimiter.pause();
-                if (content == null || content.isBlank()) continue;
-                syncEventService.notify(repository.getRepositoryId(), IndexStatus.CHUNKING);
-                List<Document> chunks = codeChunker.chunkFile
-                        (repository.getRepositoryId().toString(), path, content);
+
+                if (content == null || content.isBlank()) {
+                    continue;
+                }
+
+                repositorySourceWriter.write(
+                        sourceDirectory, path, content);
+
+                syncEventService.notify(
+                        repository.getRepositoryId(),
+                        IndexStatus.CHUNKING);
+
+                List<Document> chunks = codeChunker.chunkFile(
+                        repository.getRepositoryId().toString(),
+                        path,
+                        content);
+
                 if (chunks != null) {
                     for (Document chunk : chunks) {
                         batch.add(chunk);
+
                         if (batch.size() >= vectorBatchSize) {
                             vectorStore.add(batch);
                             indexedChunks += batch.size();
                             batch.clear();
-                            progressService.updateProgress(repository.getRepositoryId(), totalFiles, processedFiles, indexedChunks);
+                            progressService.updateProgress(
+                                    repository.getRepositoryId(),
+                                    totalFiles,
+                                    processedFiles,
+                                    indexedChunks);
                         }
                     }
                 }
             } catch (Exception ex) {
-                log.warn("Failed to process file {} in {}: {}", path, repository.getFullName(), ex.getMessage(), ex);
+                log.warn(
+                        "Failed to process file {} in {}",
+                        path,
+                        repository.getFullName(),
+                        ex);
             } finally {
                 processedFiles++;
-                if (processedFiles % PROGRESS_EVERY_N_FILES == 0 || processedFiles == totalFiles) {
-                    progressService.updateProgress(repository.getRepositoryId(), totalFiles, processedFiles, indexedChunks);
+
+                if (processedFiles
+                                % PROGRESS_EVERY_N_FILES
+                        == 0
+                        || processedFiles == totalFiles) {
+                    progressService.updateProgress(
+                            repository.getRepositoryId(),
+                            totalFiles,
+                            processedFiles,
+                            indexedChunks);
                 }
             }
         }
+
         if (!batch.isEmpty()) {
             vectorStore.add(batch);
             indexedChunks += batch.size();
             batch.clear();
         }
-        progressService.updateProgress(repository.getRepositoryId(), totalFiles, processedFiles, indexedChunks);
-        log.info("Repository indexing completed. repository={}, files={}, chunks={}",
-                repository.getFullName(), processedFiles, indexedChunks);
+
+        syncEventService.notify(
+                repository.getRepositoryId(),
+                IndexStatus.GRAPH_BUILDING);
+
+        try {
+            graphIndexingService.buildAndIndex(
+                    repository.getRepositoryId(),
+                    sourceDirectory);
+        } catch (Exception ex) {
+            log.error(
+                    "Graphify indexing failed for {}",
+                    repository.getFullName(),
+                    ex);
+
+            syncEventService.notify(
+                    repository.getRepositoryId(),
+                    IndexStatus.FAILED);
+
+            throw new IllegalStateException(
+                    "Graph indexing failed", ex);
+        }
+
+        progressService.updateProgress(
+                repository.getRepositoryId(),
+                totalFiles,
+                processedFiles,
+                indexedChunks);
+
+        syncEventService.notify(
+                repository.getRepositoryId(),
+                IndexStatus.COMPLETED);
     }
 
     private boolean isBlob(Map<String, Object> entry) {
