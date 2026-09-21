@@ -6,6 +6,8 @@ import { Footer } from '../components/layout/Footer';
 import { BackgroundAnimation } from '../components/landing/BackgroundAnimation';
 import { SyncPipelineVisualizer } from '../components/dashboard/SyncPipelineVisualizer';
 import type { SyncStage } from '../components/dashboard/SyncPipelineVisualizer';
+import { IndexingPipelineVisualizer } from '../components/dashboard/IndexingPipelineVisualizer';
+import { RepoPilotChatModal } from '../components/chat/RepoPilotChatModal';
 import { StatsOverview } from '../components/dashboard/StatsOverview';
 import { RepositoryList } from '../components/dashboard/RepositoryList';
 import { repositoryService } from '../services/api/repositoryService';
@@ -41,6 +43,16 @@ export const DashboardPage: React.FC = () => {
   const [searchKeyword, setSearchKeyword] = useState<string>('');
 
   const [isProfileModalOpen, setIsProfileModalOpen] = useState<boolean>(false);
+
+  // Indexing Pipeline Modal State
+  const [indexingRepoId, setIndexingRepoId] = useState<string | null>(null);
+  const [indexingRepoName, setIndexingRepoName] = useState<string | null>(null);
+  const [isIndexingModalOpen, setIsIndexingModalOpen] = useState<boolean>(false);
+
+  // RepoPilot Chat Modal State
+  const [chatRepoId, setChatRepoId] = useState<string | null>(null);
+  const [chatRepoName, setChatRepoName] = useState<string | null>(null);
+  const [isChatModalOpen, setIsChatModalOpen] = useState<boolean>(false);
 
   const eventSourceRef = useRef<EventSource | null>(null);
 
@@ -242,8 +254,38 @@ export const DashboardPage: React.FC = () => {
             setCurrentPage(0);
             loadRepositories(0, newSize, searchKeyword);
           }}
+          onIndexRepo={(id, name) => {
+            setIndexingRepoId(id);
+            setIndexingRepoName(name);
+            setIsIndexingModalOpen(true);
+          }}
+          onOpenChat={(repo) => {
+            setChatRepoId(repo.id);
+            setChatRepoName(repo.name);
+            setIsChatModalOpen(true);
+          }}
         />
       </main>
+
+      {/* Real-time Repository Indexing Pipeline Modal */}
+      <IndexingPipelineVisualizer
+        repositoryId={indexingRepoId}
+        repositoryName={indexingRepoName}
+        isOpen={isIndexingModalOpen}
+        onClose={() => setIsIndexingModalOpen(false)}
+        onIndexingComplete={() => {
+          loadStats();
+          loadRepositories(currentPage, pageSize, searchKeyword);
+        }}
+      />
+
+      {/* RepoPilot AI Chat Modal */}
+      <RepoPilotChatModal
+        repositoryId={chatRepoId}
+        repositoryName={chatRepoName}
+        isOpen={isChatModalOpen}
+        onClose={() => setIsChatModalOpen(false)}
+      />
 
       {/* User Profile Details Modal */}
       {isProfileModalOpen && (

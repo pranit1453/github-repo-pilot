@@ -38,14 +38,67 @@ spring:
       client:
         registration:
           github:
-            client-id: ${GITHUB_CLIENT_ID:}
-            client-secret: ${GITHUB_CLIENT_SECRET:}
+            client-id: ${GITHUB_CLIENT_ID:Ov23liYD3wCIZ0UJHohT}
+            client-secret: ${GITHUB_CLIENT_SECRET:811b6e32b3f809b048d20ffda4099165716f684a}
             scope:
               - read:user
               - repo
         provider:
           github:
             user-name-attribute: id
+  # AI Configuration
+  ai:
+    chat:
+      client:
+        enabled: true
+      memory:
+        repository:
+          jdbc:
+            initialize-schema: always
+    openai:
+      api-key: ${CHAT_KEY:demo}
+      base-url: ${CHAT_BASE_URL:https://api.openai.com}
+      read-timeout: 300s
+      connect-timeout: 60s
+      chat:
+        options:
+          model: ${CHAT_MODEL:gpt-4o-mini}
+          temperature: 0.2
+          max-completion-tokens: 2048
+      embedding:
+        api-key: ${EMBEDDING_KEY:${CHAT_KEY:demo}}
+        base-url: ${EMBEDDING_BASE_URL:${CHAT_BASE_URL:https://api.openai.com}}
+        model: ${EMBEDDING_MODEL:text-embedding-3-small}
+        dimensions: 2048
+    # Vector DB Configuration
+    vectorstore:
+      qdrant:
+        host: ${QDRANT_HOST:localhost}
+        port: ${QDRANT_PORT:6334}
+        api-key: ${QDRANT_API_KEY}
+        collection-name: ${QDRANT_COLLECTION_NAME:Repo-Pilot}
+        content-field-name: ${QDRANT_CONTENT_FIELD_NAME:repo_content}
+        use-tls: ${QDRANT_USE_TLS:false}
+        initialize-schema: true
+# RAG Configuration
+rag:
+  chunking:
+    chunk-size: 400
+    min-chunk-size-chars: 100
+    min-chunk-length-to-embed: 10
+    max-num-chunks: 5000
+    keep-separator: true
+  retrieval:
+    top-k: 5
+    candidate-k: 20
+    similarity-threshold: 0.70
+  rewrite:
+    api-key: ${REWRITE_KEY}
+    base-url: ${REWRITE_BASE_URL}
+    chat:
+      model: ${REWRITE_MODEL}
+      temperature: 0.1
+      max-tokens: 512
 # JWT Token Configuration
 security:
   accessToken:

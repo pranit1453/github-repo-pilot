@@ -1,7 +1,7 @@
-package com.pranit.github.repo.service.impl;
+package com.pranit.github.rag.ingestion.service.impl;
 
-import com.pranit.github.repo.constant.SyncStatus;
-import com.pranit.github.repo.service.RepositorySyncEventService;
+import com.pranit.github.entities.constant.IndexStatus;
+import com.pranit.github.rag.ingestion.service.RepositoryIndexingSyncEventService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
@@ -12,7 +12,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 @Slf4j
 @Service
-public final class RepositorySyncEventServiceImpl implements RepositorySyncEventService {
+public class RepositoryIndexingSyncEventServiceImpl implements RepositoryIndexingSyncEventService {
 
     private final Map<UUID, SseEmitter> emitters = new ConcurrentHashMap<>();
 
@@ -34,14 +34,14 @@ public final class RepositorySyncEventServiceImpl implements RepositorySyncEvent
     }
 
     @Override
-    public void notify(final UUID userId, final SyncStatus status) {
+    public void notify(final UUID userId, final IndexStatus status) {
         final SseEmitter emitter = emitters.get(userId);
         if (emitter == null) return;
         try {
             emitter.send(SseEmitter.event()
-                    .name("repository-sync")
+                    .name("indexing-sync")
                     .data(Map.of("status", status.name())));
-            if (status == SyncStatus.COMPLETED || status == SyncStatus.FAILED) {
+            if (status == IndexStatus.INDEXED || status == IndexStatus.FAILED) {
                 try {
                     emitter.complete();
                 } catch (Exception ignored) {
@@ -49,7 +49,7 @@ public final class RepositorySyncEventServiceImpl implements RepositorySyncEvent
                 emitters.remove(userId, emitter);
             }
         } catch (Exception e) {
-            log.debug("SSE client disconnected or send failed for user {}: {}", userId, e.getMessage());
+            log.debug("SSE client disconnected or send failed for repository {}: {}", userId, e.getMessage());
             emitters.remove(userId, emitter);
         }
     }
